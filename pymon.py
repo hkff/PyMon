@@ -20,6 +20,8 @@ __author__ = 'walid'
 
 from fotl.fotlmon import *
 
+class Eval(UExp):
+    symbol = "V"
 
 class meta(object):
     """
@@ -39,27 +41,35 @@ class meta(object):
         once, as part of the decoration process! You can only give
         it a single argument, which is the function object.
         """
-        def wrapped(*args):
-            # print("== Before calling %s%s" % (f.__name__, args))
+        def wrapped(*args, **kargs):
+            # print("== Before calling %s%s%s" % (f.__name__, args, kargs))
             # print(" Decorator arguments:", self.formula)
-            f(*args)
-            # print("== After calling %s%s" % (f.__name__, args))
+            f(*args, **kargs)
+            # print("== After calling %s%s%s" % (f.__name__, args, kargs))
 
             args2 = ["'"+str(args[0].__class__.__name__)+"'"] + ["'"+str(x)+"'" for x in args[1:]]
             args2 = ",".join(args2)
             e = "%s(%s)" % (f.__name__, args2)
             self.mon.trace.push_event(Event.parse('{'+e+'}'))
-            res = self.mon.monitor(once=True)
+            res = self.mon.monitor(once=False)
             print(res)
         return wrapped
 
+"""
+- Allowed predicates :
+Method call : fx(className, object, args)
+Eval('python boolean exp')
+
+Eval(a > 5)
+"""
 
 class Foo:
-    @meta(G(P("hello('Foo', '4', x)")))
-    def hello(b, a=None, c=None):
+    # @meta(G(P("hello('Foo', '4')")))
+    @meta(G(P("eval('a > 4')")))
+    def hello(self, a, c=None):
         print("Hello world !")
 
 f = Foo()
-f.hello(4)
+f.hello(1, c=4)
 f.hello(5)
 f.hello(4)
