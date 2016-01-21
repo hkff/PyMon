@@ -39,6 +39,9 @@ class mon_fx(Monitor):
         """
         super().__init__(formula)
 
+    def print(self, *args):
+        print(*args)
+
     def __call__(self, f):
         """
         If there are decorator arguments, __call__() is only called
@@ -49,23 +52,58 @@ class mon_fx(Monitor):
             if inspect.isfunction(f):
                 context = {}
                 sig = inspect.signature(f)
-                print(inspect.signature(f).parameters)
+                params = sig.parameters
 
-                # print("== Before calling %s%s%s" % (f.__name__, args, kargs))
-                # print(" Decorator arguments:", self.formula)
-                f(*args, **kargs)
-                # print("== After calling %s%s%s" % (f.__name__, args, kargs))
+                i = 0
+                for p in params:
+                    if i < len(args):
+                        # Handle positional args first
+                        context[str(p)] = args[i]
+                    else:
+                        # Handle positional kargs first
+                        context[str(p)] = kargs.get(str(p))
+                    i += 1
 
+                self.print("Call context %s " % context)
+                self.print(" Decorator arguments:", self.formula)
+
+                #########################
+                # Performing the fx call
+                #########################
+                self.print("=== Before calling %s%s%s" % (f.__name__, args, kargs))
+                fx_ret = f(*args, **kargs)
+                self.print("=== After calling %s%s%s" % (f.__name__, args, kargs))
+
+                #################
+                # Pushing events
+                #################
+                events = []
+                # Method call
                 args2 = ["'"+str(args[0].__class__.__name__)+"'"] + ["'"+str(x)+"'" for x in args[1:]]
                 args2 = ",".join(args2)
-                e = "%s(%s)" % (f.__name__, args2)
-                self.mon.trace.push_event(Event.parse('{'+e+'}'))
+                events.append("%s(%s)" % (f.__name__, args2))
+                # Method arguments types / values
+                for x in context:
+                    events.append("ARG('%s', '%s')" % (x, type(context.get(x)).__name__))
+                    events.append("%s('%s')" % (type(context.get(x)).__name__, x))
+
+                # Method return type / value
+                events.append("RET('%s', '%s')" % (fx_ret, type(fx_ret).__name__))
+                events.append("%s('%s')" % (type(fx_ret).__name__, 'x'))
+
+                # Push event into monitor
+                self.mon.trace.push_event(Event.parse('{'+"|".join(events)+'}'))
+
+                # Run monitor
+                print(self.mon.trace)
                 res = self.mon.monitor(once=False)
                 print(res)
 
+                return fx_ret
             else:
                 raise Exception("Unsupported type %s " % type(f))
         return wrapped
+
 
 """
 - Allowed predicates :
@@ -73,6 +111,10 @@ Method call : fx(className, object, args)
 Eval('python boolean exp')
 
 Eval(a > 5)
+return type : RET(val, type)
+
+
+ALWAYS( ARG(name, type) => ~ RET(val, type) )
 """
 def trace_calls_and_returns(frame, event, arg):
     co = frame.f_code

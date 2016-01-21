@@ -22,13 +22,15 @@ from whitebox.whitebox import *
 
 class Foo:
     # @mon_fx(G(P("hello('Foo', '4')")))
-    @mon_fx(G(P("eval('a > 4')")))
+    # @mon_fx(G(P("eval('a > 4')")))
+    @mon_fx(G(Forall(VD('x', 'int'), P("RET(x, 'int')"))))
     def hello(self, a, c=None):
         print("Hello world !")
+        return 5
 
 
 # sys.settrace(trace_calls_and_returns)
 
 f = Foo()
-f.hello(1, c=4)
-f.hello(5)
+x = f.hello(1, c=4)
+# f.hello(5)
