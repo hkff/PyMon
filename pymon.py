@@ -23,14 +23,23 @@ from whitebox.whitebox import *
 class Foo:
     # @mon_fx(G(P("hello('Foo', '4')")))
     # @mon_fx(G(P("eval('a > 4')")))
-    @mon_fx(G(Forall(VD('x', 'int'), P("RET(x, 'int')"))))
+    @mon_fx(G(Forall(VD('x', 'RET'), P('RET(x, "int")'))))
+    #@mon_fx(G(RET(ANY, int)))
     def hello(self, a, c=None):
         print("Hello world !")
         return 5
+    # V x:RET, V y:ARG. ARG(y, 'secret') => ~(RET(x, 'Public')
+    @mon_fx(G(Forall(VD('x', 'RET'), Forall(VD('y', 'ARG'), Imply(P('ARG(y, "Secret")'), Neg(P('RET(x, "Public")')))))))
+    def login(self, data):
+        print("Performing data declassification")
+        return Public()
 
+class Secret(): pass
+class Public(): pass
 
 # sys.settrace(trace_calls_and_returns)
 
 f = Foo()
-x = f.hello(1, c=4)
+# x = f.hello(1, c=4)
 # f.hello(5)
+f.login(Secret())

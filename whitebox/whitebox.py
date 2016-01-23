@@ -21,7 +21,11 @@ from fotl.fotlmon import *
 import inspect
 import sys
 
+DEBUG = False
 
+###################
+# Monitor
+###################
 class Monitor:
     def __init__(self, formula):
         self.formula = formula
@@ -40,7 +44,8 @@ class mon_fx(Monitor):
         super().__init__(formula)
 
     def print(self, *args):
-        print(*args)
+        if DEBUG:
+            print(*args)
 
     def __call__(self, f):
         """
@@ -86,10 +91,12 @@ class mon_fx(Monitor):
                 for x in context:
                     events.append("ARG('%s', '%s')" % (x, type(context.get(x)).__name__))
                     events.append("%s('%s')" % (type(context.get(x)).__name__, x))
+                    events.append("ARG('%s')" % x)
 
                 # Method return type / value
                 events.append("RET('%s', '%s')" % (fx_ret, type(fx_ret).__name__))
-                events.append("%s('%s')" % (type(fx_ret).__name__, 'x'))
+                events.append("%s('%s')" % (type(fx_ret).__name__, fx_ret))
+                events.append("RET('%s')" % fx_ret)
 
                 # Push event into monitor
                 self.mon.trace.push_event(Event.parse('{'+"|".join(events)+'}'))
