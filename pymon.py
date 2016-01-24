@@ -1,5 +1,5 @@
 """
-<one line to give the program's name and a brief idea of what it does.>
+Pymon Version 0.1
 Copyright (C) 2016 Walid Benghabrit
 
 This program is free software: you can redistribute it and/or modify
