@@ -33,12 +33,19 @@ class Foo:
         print("Performing data declassification")
         return Public()
 
+
+@mon_fx("G(![x:RET y:ARG] ARG(y, 'Secret') => ~(RET(x, 'Public')))")
+def login(data):
+    print("Performing data declassification")
+    return Public()
+
+
 class Secret(): pass
 class Public(): pass
 
 # sys.settrace(trace_calls_and_returns)
 
 f = Foo()
-# x = f.hello(1, c=4)
-# f.hello(5)
+x = f.hello(1, c=4)
+f.hello(5)
 f.login(Secret())
