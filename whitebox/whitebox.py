@@ -21,30 +21,31 @@ from fotl.fotlmon import *
 import inspect
 import sys
 
-DEBUG = False
 
 ###################
 # Monitor
 ###################
 class Monitor:
-    def __init__(self, formula):
+    def __init__(self, formula=None, debug=False, povo=True):
         self.formula = formula
         self.mon = Fotlmon(self.formula, Trace())
+        self.debug = debug
+        self.povo = povo
 
 
 class mon_fx(Monitor):
     """
     Meta class
     """
-    def __init__(self, formula=None):
+    def __init__(self, formula=None, debug=False, povo=True):
         """
         If there are decorator arguments, the function
         to be decorated is not passed to the constructor!
         """
-        super().__init__(formula)
+        super().__init__(formula, debug=debug, povo=povo)
 
     def print(self, *args):
-        if DEBUG:
+        if self.debug:
             print(*args)
 
     def __call__(self, f):
@@ -92,20 +93,30 @@ class mon_fx(Monitor):
                     events.append("ARG('%s', '%s')" % (x, type(context.get(x)).__name__))
                     events.append("%s('%s')" % (type(context.get(x)).__name__, x))
                     events.append("ARG('%s')" % x)
+                    # Adding super types
+                    o = context.get(x)
+                    if isinstance(o, object):
+                        for t in o.__class__.__mro__:
+                            events.append("%s('%s')" % (t.__name__, x))
 
                 # Method return type / value
                 events.append("RET('%s', '%s')" % (fx_ret, type(fx_ret).__name__))
                 events.append("%s('%s')" % (type(fx_ret).__name__, fx_ret))
                 events.append("RET('%s')" % fx_ret)
+                if isinstance(fx_ret, object):
+                    for t in fx_ret.__class__.__mro__:
+                        events.append("%s('%s')" % (t.__name__, x))
 
                 # Push event into monitor
                 self.mon.trace.push_event(Event.parse('{'+"|".join(events)+'}'))
 
                 # Run monitor
-                print(self.mon.trace)
+                self.print(self.mon.trace)
                 res = self.mon.monitor(once=False)
-                print(res)
+                if self.povo:
+                    print(res)
 
+                self.print(self.mon.formula.toCODE())
                 return fx_ret
             else:
                 raise Exception("Unsupported type %s " % type(f))
