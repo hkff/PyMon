@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 __author__ = 'walid'
 
 from whitebox.whitebox import *
-import time
+
 
 ###################################################################
-# 1. A simple example that show type checks on arguments
-#    Here we check the type of the argument name to be an str
+# 1. A simple example that shows type checks on arguments.
+#    Here we check the type of the argument name to be an str.
 ###################################################################
 @mon_fx("G(str('name'))")
 def say_hello(name):
@@ -32,33 +32,40 @@ def say_hello(name):
 print("\n--------- Example 1 : ")
 say_hello("Bob")    # Monitor should show ?
 say_hello(1)        # Monitor should show False
-say_hello("Alice")  # Monitor should still show ? because the property was violated
+say_hello("Alice")  # Monitor should still show False because the property was violated
 
 
 ###################################################################
-# 2. A simple example that show type checks on return value
-#    Here we want to check that the return value is always an int
+# 2. A simple example that shows type checks on return value.
+#    Here we want to check that the return value is always an int.
 ###################################################################
-@mon_fx("G(![x:RET] int(x))")
+@mon_fx("G(![x:RET] int(x))", debug=False)
 def add(a, b):
     return a + b
 
-print("\n--------- Example 1 : ")
+print("\n--------- Example 2 : ")
 add(1, 2)        # Monitor should show ?
 add("1", "2")    # Monitor should show False
-add(2, 3)        # Monitor should still show ? because the property was violated
+add(2, 3)        # Monitor should still show False because the property was violated
 
 
 ###################################################################
-# 3. A simple example that show type checks
-#    Here we force the type of the argument name to be an str
+# 3. A simple example that shows multiple args handling
+#    Here if one of the args is a string the function should
+#    returns a string too.
 ###################################################################
-@mon_fx("G(![x:RET] int(x))", debug=False, povo=False)
-def add(a, b):
-    return a + b
+@mon_fx("G( (?[x:ARG] str(x)) => (![y:RET] str(y)) )")
+def concat(a, b):
+    if isinstance(a, int) and isinstance(b, int):
+        return a + b
+    else:
+        return int(str(a) + str(b))
 
-print("\n--------- Example 1 : ")
-add(1, 2)        # Monitor should show ?
-add("1", "2")    # Monitor should show False
-add(2, 3)        # Monitor should still show ? because the property was violated
+print("\n--------- Example 3 : ")
+r1 = concat(1, 2)      # Monitor should show ?
+print("concat(1, 2) : %s" % r1)
+
+r2 = concat("1", 2)    # Monitor should show False
+print("concat('1', 2) : %s" % r2)
+
 

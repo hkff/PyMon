@@ -74,7 +74,6 @@ class mon_fx(Monitor):
 
             # self.print("Call context : %s \n Decorator arguments : %s" % (context, self.formula))
 
-
             #########################
             # Performing the fx call
             #########################
@@ -92,28 +91,23 @@ class mon_fx(Monitor):
             predicates.append(Predicate(f.__name__, [Constant(args2)]))
 
             # Method arguments types / values
-
-            # for x in context:
-            def addArgs(x):
-                predicates.append(Predicate(type(context.get(x)).__name__, [Constant(x)]))
+            for x in context:
+                # predicates.append(Predicate(type(context.get(x)).__name__, [Constant(x)]))
                 predicates.append(Predicate("ARG", [Constant(x)]))
 
                 # Adding super types
                 o = context.get(x)
                 if isinstance(o, object):
-                    # for t in o.__class__.__mro__:
-                    #     predicates.append(Predicate(t.__name__, [Constant(x)]))
-                    map(lambda t: predicates.append(Predicate(t.__name__, [Constant(x)])), o.__class__.__mro__)
-            map(addArgs, context)
+                    for t in o.__class__.__mro__:
+                        predicates.append(Predicate(t.__name__, [Constant(x)]))
 
             # Method return type / value
-            predicates.append(Predicate(type(fx_ret).__name__, [Constant(fx_ret)]))
+            # predicates.append(Predicate(type(fx_ret).__name__, [Constant(fx_ret)]))
             predicates.append(Predicate("RET", [Constant(fx_ret)]))
 
             if isinstance(fx_ret, object):
-                # for t in fx_ret.__class__.__mro__:
-                #     predicates.append(Predicate(t.__name__, [Constant(fx_ret)]))
-                map(lambda t: predicates.append(Predicate(t.__name__, [Constant(fx_ret)])), fx_ret.__class__.__mro__)
+                for t in fx_ret.__class__.__mro__:
+                    predicates.append(Predicate(t.__name__, [Constant(fx_ret)]))
 
             # Push event into monitor
             self.mon.trace.push_event(Event(predicates))
