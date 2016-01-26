@@ -31,6 +31,7 @@ class Monitor:
         self.mon = Fotlmon(self.formula, Trace())
         self.debug = debug
         self.povo = povo
+        self.sig = None
 
 
 class mon_fx(Monitor):
@@ -54,72 +55,78 @@ class mon_fx(Monitor):
         once, as part of the decoration process! You can only give
         it a single argument, which is the function object.
         """
+        if inspect.isfunction(f):
+            self.sig = inspect.signature(f)
+        else:
+            raise Exception("Unsupported type %s " % type(f))
+
         def wrapped(*args, **kargs):
-            if inspect.isfunction(f):
-                context = {}
-                sig = inspect.signature(f)
-                params = sig.parameters
+            context = {}
+            i = 0
+            for p in self.sig.parameters:
+                if i < len(args):
+                    # Handle positional args first
+                    context[str(p)] = args[i]
+                else:
+                    # Handle positional kargs first
+                    context[str(p)] = kargs.get(str(p))
+                i += 1
 
-                i = 0
-                for p in params:
-                    if i < len(args):
-                        # Handle positional args first
-                        context[str(p)] = args[i]
-                    else:
-                        # Handle positional kargs first
-                        context[str(p)] = kargs.get(str(p))
-                    i += 1
+            # self.print("Call context : %s \n Decorator arguments : %s" % (context, self.formula))
 
-                self.print("Call context %s " % context)
-                self.print(" Decorator arguments:", self.formula)
 
-                #########################
-                # Performing the fx call
-                #########################
-                self.print("=== Before calling %s%s%s" % (f.__name__, args, kargs))
-                fx_ret = f(*args, **kargs)
-                self.print("=== After calling %s%s%s" % (f.__name__, args, kargs))
+            #########################
+            # Performing the fx call
+            #########################
+            # self.print("=== Before calling %s%s%s" % (f.__name__, args, kargs))
+            fx_ret = f(*args, **kargs)
+            # self.print("=== After calling %s%s%s" % (f.__name__, args, kargs))
 
-                #################
-                # Pushing events
-                #################
-                events = []
-                # Method call
-                args2 = ["'"+str(args[0].__class__.__name__)+"'"] + ["'"+str(x)+"'" for x in args[1:]]
-                args2 = ",".join(args2)
-                events.append("%s(%s)" % (f.__name__, args2))
-                # Method arguments types / values
-                for x in context:
-                    events.append("ARG('%s', '%s')" % (x, type(context.get(x)).__name__))
-                    events.append("%s('%s')" % (type(context.get(x)).__name__, x))
-                    events.append("ARG('%s')" % x)
-                    # Adding super types
-                    o = context.get(x)
-                    if isinstance(o, object):
-                        for t in o.__class__.__mro__:
-                            events.append("%s('%s')" % (t.__name__, x))
+            #################
+            # Pushing events
+            #################
+            predicates = []
+            # Method call
+            args2 = ["'"+str(args[0].__class__.__name__)+"'"] + ["'"+str(x)+"'" for x in args[1:]]
+            args2 = ",".join(args2)
+            predicates.append(Predicate(f.__name__, [Constant(args2)]))
 
-                # Method return type / value
-                events.append("RET('%s', '%s')" % (fx_ret, type(fx_ret).__name__))
-                events.append("%s('%s')" % (type(fx_ret).__name__, fx_ret))
-                events.append("RET('%s')" % fx_ret)
-                if isinstance(fx_ret, object):
-                    for t in fx_ret.__class__.__mro__:
-                        events.append("%s('%s')" % (t.__name__, x))
+            # Method arguments types / values
 
-                # Push event into monitor
-                self.mon.trace.push_event(Event.parse('{'+"|".join(events)+'}'))
+            # for x in context:
+            def addArgs(x):
+                predicates.append(Predicate(type(context.get(x)).__name__, [Constant(x)]))
+                predicates.append(Predicate("ARG", [Constant(x)]))
 
-                # Run monitor
-                self.print(self.mon.trace)
-                res = self.mon.monitor(once=False)
-                if self.povo:
-                    print(res)
+                # Adding super types
+                o = context.get(x)
+                if isinstance(o, object):
+                    # for t in o.__class__.__mro__:
+                    #     predicates.append(Predicate(t.__name__, [Constant(x)]))
+                    map(lambda t: predicates.append(Predicate(t.__name__, [Constant(x)])), o.__class__.__mro__)
+            map(addArgs, context)
 
-                self.print(self.mon.formula.toCODE())
-                return fx_ret
-            else:
-                raise Exception("Unsupported type %s " % type(f))
+            # Method return type / value
+            predicates.append(Predicate(type(fx_ret).__name__, [Constant(fx_ret)]))
+            predicates.append(Predicate("RET", [Constant(fx_ret)]))
+
+            if isinstance(fx_ret, object):
+                # for t in fx_ret.__class__.__mro__:
+                #     predicates.append(Predicate(t.__name__, [Constant(fx_ret)]))
+                map(lambda t: predicates.append(Predicate(t.__name__, [Constant(fx_ret)])), fx_ret.__class__.__mro__)
+
+            # Push event into monitor
+            self.mon.trace.push_event(Event(predicates))
+
+            # Run monitor
+            # self.print(self.mon.trace)
+            res = self.mon.monitor(once=False)
+
+            if self.povo:
+                print(res)
+
+            # self.print(self.mon.formula.toCODE())
+            return fx_ret
         return wrapped
 
 
