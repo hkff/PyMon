@@ -36,7 +36,7 @@ class Monitor:
 
 class mon_fx(Monitor):
     """
-    Meta class
+    Decorator
     """
     def __init__(self, formula=None, debug=False, povo=True):
         """
