@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 __author__ = 'walid'
 
-from fotl.fotlmon import *
+from fodtlmon.fotl.fotlmon import *
 import inspect
 import sys
 
