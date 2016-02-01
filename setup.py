@@ -25,5 +25,8 @@ setup(
     license='GPL3',
     author='Walid Benghabrit',
     author_email='Walid.Benghabrit@mines-nantes.fr',
-    description='Temporal Logic monitoring framework for python.'
+    description='Temporal Logic monitoring framework for python.',
+    install_requires=[
+        'fodtlmon>=1.0',
+    ]
 )
