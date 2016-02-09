@@ -18,14 +18,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 __author__ = 'walid'
 
-from whitebox.whitebox import *
 from whitebox.systypes import *
 
 
-@SIG("(a: int | str) -> str")
+@SIG("(a: int | str, b: int) -> str")
 def foo(a, b):
     print("Hello %s!" % a)
     return ""
 
 if __name__ == "__main__":
     foo(1, "2")
+    foo(1, 2)

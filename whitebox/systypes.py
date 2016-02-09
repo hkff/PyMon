@@ -16,12 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 __author__ = 'walid'
-from whitebox.whitebox import Monitor
+
 import inspect
-from fodtlmon.fotl.fotl import *
+from fodtlmon.fotl.fotlmon import *
 
 
-class SIG(Monitor):
+class SIG:
     """
       MAIN  : ( ARG* ) [-> TYPE]
       ARG   : <arg_name> : TYPE
@@ -32,6 +32,9 @@ class SIG(Monitor):
         If there are decorator arguments, the function
         to be decorated is not passed to the constructor!
         """
+        self.args_formula = None
+        self.return_formula = None
+
         exp = ""
         fs = formula.split("->")
 
@@ -46,12 +49,16 @@ class SIG(Monitor):
                     if len(arg) > 1:
                         sargs += "%s &" % self.parse_type(arg[0], arg[1])
             exp += "(%s)" % sargs[:-1]
+            self.args_formula = "G(%s)" % exp
+
             # Handle return type
             if len(fs) == 2:
-                exp += " & (%s)" % self.parse_type("RET", fs[1].strip())
+                self.return_formula = " G(%s)" % self.parse_type("RET", fs[1].strip())
+        else:
+            raise Exception("Malformed type signature !")
 
-        formula = "G(%s)" % exp
-        super().__init__(formula, debug=debug)
+        self.args_mon = None if self.args_formula is None else Fotlmon(self.args_formula, Trace())
+        self.ret_mon = None if self.return_formula is None else Fotlmon(self.return_formula, Trace())
 
     def parse_type(self, arg, types):
         arg = arg.strip()
@@ -77,34 +84,35 @@ class SIG(Monitor):
             #########################
             # Monitoring arguments
             #########################
-            context = {}
-            i = 0
-            for p in self.sig.parameters:
-                if i < len(args):
-                    # Handle positional args first
-                    context[str(p)] = args[i]
-                else:
-                    # Handle positional kargs first
-                    context[str(p)] = kwargs.get(str(p))
-                i += 1
+            if self.args_formula is not None:
+                context = {}
+                i = 0
+                for p in self.sig.parameters:
+                    if i < len(args):
+                        # Handle positional args first
+                        context[str(p)] = args[i]
+                    else:
+                        # Handle positional kwargs first
+                        context[str(p)] = kwargs.get(str(p))
+                    i += 1
 
-            predicates = []
-            # Method arguments types / values
-            for x in context:
-                # Adding super types
-                o = context.get(x)
-                if isinstance(o, object):
-                    for t in o.__class__.__mro__:
-                        predicates.append(Predicate(t.__name__, [Constant(x)]))
+                predicates = []
+                # Method arguments types / values
+                for x in context:
+                    # Adding super types
+                    o = context.get(x)
+                    if isinstance(o, object):
+                        for t in o.__class__.__mro__:
+                            predicates.append(Predicate(t.__name__, [Constant(x)]))
 
-            # Push event into monitor
-            self.mon.trace.push_event(Event(predicates))
+                # Push event into monitor
+                self.args_mon.trace.push_event(Event(predicates))
 
-            # Run monitor
-            res = self.mon.monitor(once=False, struct_res=True)
-            # print(self.mon.trace)
-            if res.get("result") is Boolean3.Bottom:
-                raise Exception("Argument type Error !")  # TODO improve the message
+                # Run monitor
+                res = self.args_mon.monitor(once=False, struct_res=True)
+
+                if res.get("result") is Boolean3.Bottom:
+                    raise Exception("Argument type Error !")  # TODO improve the message
 
             #########################
             # Performing the fx call
@@ -116,20 +124,21 @@ class SIG(Monitor):
             #########################
             # Monitoring return
             #########################
-            predicates.clear()
-            if isinstance(fx_ret, object):
-                for t in fx_ret.__class__.__mro__:
-                    predicates.append(Predicate(t.__name__, [Constant(fx_ret)]))
-                    predicates.append(Predicate(t.__name__, [Constant("RET")]))
+            if self.return_formula is not None:
+                predicates = []
+                if isinstance(fx_ret, object):
+                    for t in fx_ret.__class__.__mro__:
+                        predicates.append(Predicate(t.__name__, [Constant(fx_ret)]))
+                        predicates.append(Predicate(t.__name__, [Constant("RET")]))
 
-            # Push event into monitor
-            self.mon.trace.push_event(Event(predicates))
+                # Push event into monitor
+                self.ret_mon.trace.push_event(Event(predicates))
 
-            # Run monitor
-            res = self.mon.monitor(once=False, struct_res=True)
-            # print(self.mon.trace)
-            if res.get("result") is Boolean3.Bottom:
-                raise Exception("Return type Error !")  # TODO improve the message
+                # Run monitor
+                res = self.ret_mon.monitor(once=False, struct_res=True)
+
+                if res.get("result") is Boolean3.Bottom:
+                    raise Exception("Return type Error !")  # TODO improve the message
 
             return fx_ret
         return wrapped

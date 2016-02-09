@@ -69,4 +69,3 @@ if __name__ == "__main__":
     f = App()
     # This will raise a type exception
     f.login(Username("bob"), Password("123456"))
-
