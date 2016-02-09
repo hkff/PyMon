@@ -27,4 +27,5 @@ def foo(a, b):
     print("Hello %s!" % a)
     return ""
 
-foo(1, "2")
+if __name__ == "__main__":
+    foo(1, "2")

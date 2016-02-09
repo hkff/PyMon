@@ -73,7 +73,10 @@ class SIG(Monitor):
         else:
             raise Exception("Unsupported type %s " % type(f))
 
-        def wrapped(*args, **kargs):
+        def wrapped(*args, **kwargs):
+            #########################
+            # Monitoring arguments
+            #########################
             context = {}
             i = 0
             for p in self.sig.parameters:
@@ -82,38 +85,38 @@ class SIG(Monitor):
                     context[str(p)] = args[i]
                 else:
                     # Handle positional kargs first
-                    context[str(p)] = kargs.get(str(p))
+                    context[str(p)] = kwargs.get(str(p))
                 i += 1
 
-            #########################
-            # Performing the fx call
-            #########################
-            # self.print("=== Before calling %s%s%s" % (f.__name__, args, kargs))
-            fx_ret = f(*args, **kargs)
-            # self.print("=== After calling %s%s%s" % (f.__name__, args, kargs))
-
-            #################
-            # Pushing events
-            #################
             predicates = []
-            # Method call
-            args2 = ["'"+str(args[0].__class__.__name__)+"'"] + ["'"+str(x)+"'" for x in args[1:]]
-            args2 = ",".join(args2)
-            predicates.append(Predicate(f.__name__, [Constant(args2)]))
-
             # Method arguments types / values
             for x in context:
-                predicates.append(Predicate("ARG", [Constant(x)]))
-
                 # Adding super types
                 o = context.get(x)
                 if isinstance(o, object):
                     for t in o.__class__.__mro__:
                         predicates.append(Predicate(t.__name__, [Constant(x)]))
 
-            # Method return type / value
-            predicates.append(Predicate("RET", [Constant(fx_ret)]))
+            # Push event into monitor
+            self.mon.trace.push_event(Event(predicates))
 
+            # Run monitor
+            res = self.mon.monitor(once=False, struct_res=True)
+            # print(self.mon.trace)
+            if res.get("result") is Boolean3.Bottom:
+                raise Exception("Argument type Error !")  # TODO improve the message
+
+            #########################
+            # Performing the fx call
+            #########################
+            # self.print("=== Before calling %s%s%s" % (f.__name__, args, kargs))
+            fx_ret = f(*args, **kwargs)
+            # self.print("=== After calling %s%s%s" % (f.__name__, args, kargs))
+
+            #########################
+            # Monitoring return
+            #########################
+            predicates.clear()
             if isinstance(fx_ret, object):
                 for t in fx_ret.__class__.__mro__:
                     predicates.append(Predicate(t.__name__, [Constant(fx_ret)]))
@@ -126,8 +129,7 @@ class SIG(Monitor):
             res = self.mon.monitor(once=False, struct_res=True)
             # print(self.mon.trace)
             if res.get("result") is Boolean3.Bottom:
-                raise Exception("Type Error !")  # TODO improve the message
+                raise Exception("Return type Error !")  # TODO improve the message
 
             return fx_ret
         return wrapped
-

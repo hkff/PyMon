@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 __author__ = 'walid'
-
 from whitebox.whitebox import *
 
 
@@ -29,10 +28,11 @@ from whitebox.whitebox import *
 def say_hello(name):
     print("Hello %s !" % name)
 
-print("\n--------- Example 1 : ")
-say_hello("Bob")    # Monitor should show ?
-say_hello(1)        # Monitor should show False
-say_hello("Alice")  # Monitor should still show False because the property was violated
+if __name__ == "__main__":
+    print("\n--------- Example 1 : ")
+    say_hello("Bob")    # Monitor should show ?
+    say_hello(1)        # Monitor should show False
+    say_hello("Alice")  # Monitor should still show False because the property was violated
 
 
 ###################################################################
@@ -43,10 +43,11 @@ say_hello("Alice")  # Monitor should still show False because the property was v
 def add(a, b):
     return a + b
 
-print("\n--------- Example 2 : ")
-add(1, 2)        # Monitor should show ?
-add("1", "2")    # Monitor should show False
-add(2, 3)        # Monitor should still show False because the property was violated
+if __name__ == "__main__":
+    print("\n--------- Example 2 : ")
+    add(1, 2)        # Monitor should show ?
+    add("1", "2")    # Monitor should show False
+    add(2, 3)        # Monitor should still show False because the property was violated
 
 
 ###################################################################
@@ -61,11 +62,10 @@ def concat(a, b):
     else:
         return int(str(a) + str(b))
 
-print("\n--------- Example 3 : ")
-r1 = concat(1, 2)      # Monitor should show ?
-print("concat(1, 2) : %s" % r1)
+if __name__ == "__main__":
+    print("\n--------- Example 3 : ")
+    r1 = concat(1, 2)      # Monitor should show ?
+    print("concat(1, 2) : %s" % r1)
 
-r2 = concat("1", 2)    # Monitor should show False
-print("concat('1', 2) : %s" % r2)
-
-
+    r2 = concat("1", 2)    # Monitor should show False
+    print("concat('1', 2) : %s" % r2)

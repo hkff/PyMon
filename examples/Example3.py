@@ -1,7 +1,7 @@
 #!/usr/bin/python3.4
 """
-Example 1
-Copyright (C) 2015 Walid Benghabrit
+Example 3 Same example as Example1 but using systypes
+Copyright (C) 2016 Walid Benghabrit
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 __author__ = 'walid'
-from whitebox.whitebox import *
+from whitebox.systypes import *
 
 
 ###################################
@@ -54,8 +54,9 @@ class Password(Secret): pass
 class App:
     def hello(self, a, c=None):
         print("Hello world !")
+        return 5
 
-    @mon_fx("G(![x:RET y:ARG] Secret(y) => Secret(x))")
+    @SIG("(password:Secret) -> Secret")
     def login(self, username, password):
         print("Performing data declassification")
         return Public("True")
@@ -66,5 +67,6 @@ class App:
 ###################################
 if __name__ == "__main__":
     f = App()
+    # This will raise a type exception
     f.login(Username("bob"), Password("123456"))
 
