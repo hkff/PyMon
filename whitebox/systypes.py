@@ -66,7 +66,6 @@ class SIG:
         res = ""
         for t in types:
             res += "|%s('%s')" % (t.strip(), arg)
-
         return "(%s)" % res[1:]
 
     def __call__(self, f):

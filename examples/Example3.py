@@ -54,7 +54,6 @@ class Password(Secret): pass
 class App:
     def hello(self, a, c=None):
         print("Hello world !")
-        return 5
 
     @SIG("(username:Public, password:Secret) -> Secret")
     def login(self, username, password):
