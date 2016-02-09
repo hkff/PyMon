@@ -97,9 +97,7 @@ class SIG:
                     i += 1
 
                 predicates = []
-                # Method arguments types / values
                 for x in context:
-                    # Adding super types
                     o = context.get(x)
                     if isinstance(o, object):
                         for t in o.__class__.__mro__:
