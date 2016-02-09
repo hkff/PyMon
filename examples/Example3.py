@@ -56,7 +56,7 @@ class App:
         print("Hello world !")
         return 5
 
-    @SIG("(password:Secret) -> Secret")
+    @SIG("(username:Public, password:Secret) -> Secret")
     def login(self, username, password):
         print("Performing data declassification")
         return Public("True")

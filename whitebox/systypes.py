@@ -65,7 +65,7 @@ class SIG:
         types = types.strip().split("|")
         res = ""
         for t in types:
-            res += "| %s('%s')" % (t.strip(), arg)
+            res += "|%s('%s')" % (t.strip(), arg)
 
         return "(%s)" % res[1:]
 
@@ -110,14 +110,16 @@ class SIG:
                 res = self.args_mon.monitor(once=False, struct_res=True)
 
                 if res.get("result") is Boolean3.Bottom:
-                    raise Exception("Argument type Error !")  # TODO improve the message
+                    expected = self.args_formula[3:-2].replace("&", "& ").replace("|", " | ")
+                    found = ["%s: %s" % (str(x), str(type(context.get(x)))) for x in context]
+                    raise Exception("Arguments type Error ! Expected <%s>  Found : %s" % (expected, found))
 
             #########################
             # Performing the fx call
             #########################
-            # self.print("=== Before calling %s%s%s" % (f.__name__, args, kargs))
+            # self.print("=== Before calling %s%s%s" % (f.__name__, args, kwargs))
             fx_ret = f(*args, **kwargs)
-            # self.print("=== After calling %s%s%s" % (f.__name__, args, kargs))
+            # self.print("=== After calling %s%s%s" % (f.__name__, args, kwargs))
 
             #########################
             # Monitoring return
@@ -136,7 +138,8 @@ class SIG:
                 res = self.ret_mon.monitor(once=False, struct_res=True)
 
                 if res.get("result") is Boolean3.Bottom:
-                    raise Exception("Return type Error !")  # TODO improve the message
+                    expected = self.return_formula[4:-2].replace("('RET')", "").replace("|", " | ")
+                    raise Exception("Return type Error ! Expected <%s>  Found : %s" % (expected, type(fx_ret)))
 
             return fx_ret
         return wrapped
