@@ -19,6 +19,7 @@ __author__ = 'walid'
 
 import inspect
 from fodtlmon.fotl.fotlmon import *
+import datetime
 
 
 class SIG:
@@ -27,13 +28,14 @@ class SIG:
       ARG   : <arg_name> : TYPE
       TYPE  : TYPE ( '|' ) TYPE | STRING | [TYPE] TODO
     """
-    def __init__(self, formula=None, debug=False):
+    def __init__(self, formula=None, debug=False, raise_on_error=True):
         """
         If there are decorator arguments, the function
         to be decorated is not passed to the constructor!
         """
         self.args_formula = None
         self.return_formula = None
+        self.raise_on_error = raise_on_error
 
         exp = ""
         fs = formula.split("->")
@@ -111,8 +113,11 @@ class SIG:
                 if res.get("result") is Boolean3.Bottom:
                     expected = self.args_formula[3:-2].replace("&", "& ").replace("|", " | ")
                     found = ["%s: %s" % (str(x), str(type(context.get(x)))) for x in context]
-                    raise Exception("Arguments type Error ! Expected <%s>  Found : %s" % (expected, found))
-
+                    res = "Arguments type Error ! Expected <%s>  Found : %s" % (expected, found)
+                    if self.raise_on_error:
+                        raise Exception(res)
+                    else:
+                        print("On %s : %s" %(datetime.datetime.now(), res))
             #########################
             # Performing the fx call
             #########################
@@ -138,7 +143,11 @@ class SIG:
 
                 if res.get("result") is Boolean3.Bottom:
                     expected = self.return_formula[4:-2].replace("('RET')", "").replace("|", " | ")
-                    raise Exception("Return type Error ! Expected <%s>  Found : %s" % (expected, type(fx_ret)))
+                    res = "Return type Error ! Expected <%s>  Found : %s" % (expected, type(fx_ret))
+                    if self.raise_on_error:
+                        raise Exception(res)
+                    else:
+                        print("On %s : %s" %(datetime.datetime.now(), res))
 
             return fx_ret
         return wrapped
