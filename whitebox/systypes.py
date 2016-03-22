@@ -36,28 +36,33 @@ class SIG:
         self.args_formula = None
         self.return_formula = None
         self.raise_on_error = raise_on_error
+        self.annotations = None
 
-        exp = ""
-        fs = formula.split("->")
-
-        # Handle args
-        if len(fs) > 0:
-            sargs = ""
-            fs[0] = fs[0].strip()
-            if fs[0].startswith("(") and fs[0].endswith(")"):
-                args = fs[0][1:-1].split(",")
-                for a in args:
-                    arg = a.strip().split(":")
-                    if len(arg) > 1:
-                        sargs += "%s &" % self.parse_type(arg[0], arg[1])
-            exp += "(%s)" % sargs[:-1]
-            self.args_formula = "G(%s)" % exp
-
-            # Handle return type
-            if len(fs) == 2:
-                self.return_formula = " G(%s)" % self.parse_type("RET", fs[1].strip())
+        if formula is None:
+            # Check using python types annotations
+            pass
         else:
-            raise Exception("Malformed type signature !")
+            exp = ""
+            fs = formula.split("->")
+
+            # Handle args
+            if len(fs) > 0:
+                sargs = ""
+                fs[0] = fs[0].strip()
+                if fs[0].startswith("(") and fs[0].endswith(")"):
+                    args = fs[0][1:-1].split(",")
+                    for a in args:
+                        arg = a.strip().split(":")
+                        if len(arg) > 1:
+                            sargs += "%s &" % self.parse_type(arg[0], arg[1])
+                exp += "(%s)" % sargs[:-1]
+                self.args_formula = "G(%s)" % exp
+
+                # Handle return type
+                if len(fs) == 2:
+                    self.return_formula = " G(%s)" % self.parse_type("RET", fs[1].strip())
+            else:
+                raise Exception("Malformed type signature !")
 
         self.args_mon = None if self.args_formula is None else Fotlmon(self.args_formula, Trace())
         self.ret_mon = None if self.return_formula is None else Fotlmon(self.return_formula, Trace())
@@ -78,6 +83,22 @@ class SIG:
         """
         if inspect.isfunction(f):
             self.sig = inspect.signature(f)
+            self.annotations = f.__annotations__
+
+            # Check using python annotations
+            if self.args_formula is None and self.return_formula is None:
+                exp = ""
+                for a in self.annotations:
+                    if a == 'return':
+                        self.return_formula = " G(%s)" % self.parse_type("RET", self.annotations.get('return').__name__)
+                    else:
+                        arg = self.annotations.get(a)
+                        sargs = "%s &" % self.parse_type(a, arg.__name__)
+                        exp += "%s" % sargs
+                self.args_formula = "G(%s)" % exp[:-1]
+
+                self.args_mon = Fotlmon(self.args_formula, Trace())
+                self.ret_mon = Fotlmon(self.return_formula, Trace())
         else:
             raise Exception("Unsupported type %s " % type(f))
 
@@ -117,7 +138,7 @@ class SIG:
                     if self.raise_on_error:
                         raise Exception(res)
                     else:
-                        print("On %s : %s" %(datetime.datetime.now(), res))
+                        print("On %s : %s" % (datetime.datetime.now(), res))
             #########################
             # Performing the fx call
             #########################
@@ -147,7 +168,7 @@ class SIG:
                     if self.raise_on_error:
                         raise Exception(res)
                     else:
-                        print("On %s : %s" %(datetime.datetime.now(), res))
+                        print("On %s : %s" % (datetime.datetime.now(), res))
 
             return fx_ret
         return wrapped
