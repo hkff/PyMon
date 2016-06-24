@@ -1,5 +1,5 @@
 """
-pymon version 1.0
+pymon version 0.1
 Copyright (C) 2015 Walid Benghabrit
 
 This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@ from distutils.core import setup
 
 setup(
     name='pymon',
-    version='1.0',
-    packages=['blackbox', 'whitebox'],
-    url='https://github.com/hkff/fodtlmon',
+    version='0.1',
+    packages=['pymon', 'pymon/blackbox', 'pymon/whitebox'],
+    url='https://github.com/hkff/PyMon',
     license='GPL3',
     author='Walid Benghabrit',
     author_email='Walid.Benghabrit@mines-nantes.fr',

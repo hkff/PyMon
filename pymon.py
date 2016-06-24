@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 __author__ = 'walid'
 
-from whitebox.whitebox import *
+from pymon.whitebox.whitebox import *
 
 
 class Foo:
