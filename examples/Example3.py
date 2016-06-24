@@ -17,35 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 __author__ = 'walid'
-from whitebox.systypes import *
-
-
-###################################
-# Data type declaration
-###################################
-class Data:
-    def __init__(self, content=""):
-        self.content = content
-
-
-class Secret(Data):
-    """
-    Base class for all secret data
-    """
-    pass
-
-
-class Public(Data):
-    """
-    Base class for all public data
-    """
-    pass
-
-
-class Username(Public): pass
-
-
-class Password(Secret): pass
+from pymon.whitebox.systypes import *
+from examples.Example1 import Public, Secret, Username, Password
 
 
 ###################################
@@ -57,8 +30,10 @@ class App:
 
     @SIG("(username:Public, password:Secret) -> Secret")
     def login(self, username, password):
-        print("Performing data declassification")
-        return Public("True")
+        if password.content == "1234":
+            return Public("True")
+        else:
+            return Secret("False")
 
 
 ###################################
@@ -66,5 +41,5 @@ class App:
 ###################################
 if __name__ == "__main__":
     f = App()
-    # This will raise a type exception
     f.login(Username("bob"), Password("123456"))
+    f.login(Username("bob"), Password("1234"))  # This will raise a type exception

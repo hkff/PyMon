@@ -4,17 +4,17 @@
 
 # PyMon
 
-FodtlMon Last release : Version 0.1
+PyMon Last release : Version 0.1
 
 What is it?
 -----------
 
-FodtlMon is a monitoring framework based on distributed first order linear temporal logic.
+PylMon is a monitoring framework for python, it's based on FodtlMon which is a general moniotring framework based on distributed first order linear temporal logic.
 
 Installation
 ------------
 
-You can install fodtlmon directly using pip3 :
+You can install pymon directly using pip3 :
 
     https://pypi.python.org/pypi/pymon
     $ sudo pip3 install pymon
@@ -23,17 +23,26 @@ Or manually :
 You need PythonX.X.X >= Python3.4.0 installed on your system
 
     You need to install the following dependencies :
-
         $ sudo pip3 install fodtlmon
 
 To install the framework run setup.py:
 
         $ sudo python3 setup.py install
 
-
 Usage
 -----
 
+PyMon provides two monitoring modules, wh
+
+#### 1. WhiteBox:
+
+	from pymon.whitebox.whitebox import *
+
+Using the decorator @mon_fx("") in order to monitor a property on a function/method.
+
+	@mon_fx(formula="FODTL formula", debug=False, raise_on_error=False)
+
+##### Systype module:
 In order to use the runtime type checker first you need to import the systypes module.
 
 	from pymon.whitebox.systypes import *
@@ -49,8 +58,7 @@ The formula type have the following format:
     TYPE  : TYPE ( '|' ) TYPE | STRING
 
 
-Examples
---------
+###### Example
 A simple example with native types:
 
 	@SIG("(a:int, b:int)")
@@ -63,6 +71,7 @@ A simple example with native types:
 
 for more examples see the examples folder.
 
+#### 2. BlackBox:
 
 Licensing
 ---------

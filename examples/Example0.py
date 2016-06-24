@@ -1,7 +1,7 @@
 #!/usr/bin/python3.4
 """
 Example 0
-Copyright (C) 2015 Walid Benghabrit
+Copyright (C) 2016 Walid Benghabrit
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 __author__ = 'walid'
-from whitebox.whitebox import *
+from pymon.whitebox.whitebox import *
 
 
 ###################################################################
@@ -39,7 +39,7 @@ if __name__ == "__main__":
 # 2. A simple example that shows type checks on return value.
 #    Here we want to check that the return value is always an int.
 ###################################################################
-@mon_fx("G(![x:RET] int(x))", debug=False)
+@mon_fx("G(![x:RET] int(x))")
 def add(a, b):
     return a + b
 

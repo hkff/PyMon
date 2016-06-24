@@ -1,7 +1,7 @@
 #!/usr/bin/python3.4
 """
 Example 1
-Copyright (C) 2015 Walid Benghabrit
+Copyright (C) 2016 Walid Benghabrit
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 __author__ = 'walid'
-from whitebox.whitebox import *
+from pymon.whitebox.whitebox import *
 
 
 ###################################
@@ -52,13 +52,12 @@ class Password(Secret): pass
 # Main App
 ###################################
 class App:
-    def hello(self, a, c=None):
-        print("Hello world !")
-
     @mon_fx("G(![x:RET y:ARG] Secret(y) => Secret(x))")
     def login(self, username, password):
-        print("Performing data declassification")
-        return Public("True")
+        if password.content == "1234":
+            return Public("True")
+        else:
+            return Secret("False")
 
 
 ###################################
@@ -67,4 +66,5 @@ class App:
 if __name__ == "__main__":
     f = App()
     f.login(Username("bob"), Password("123456"))
+    f.login(Username("bob"), Password("1234"))  # This will raise a type exception
 

@@ -17,15 +17,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 __author__ = 'walid'
+from pymon.whitebox.systypes import *
 
-from whitebox.systypes import *
 
+@SIG("(a: int, b: int) -> int")
+def add(a, b):
+    return a + b
 
-@SIG("(a: int | str, b: int) -> str")
-def foo(a, b):
-    print("Hello %s!" % a)
-    return ""
+# Here the same example, but we use python builtin type annotations
+@SIG()
+def add2(a: int, b: int) -> int:
+    return a + b
+
 
 if __name__ == "__main__":
-    foo(1, "2")
-    foo(1, 2)
+    print(add(1, 2))
+    print(add(1, "2"))  # Will trigger a type error exception
