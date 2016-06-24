@@ -39,7 +39,7 @@ class SIG:
         self.annotations = None
 
         if formula is None:
-            # Check using python types annotations
+            # TODO Check using python types annotations
             pass
         else:
             exp = ""
@@ -51,7 +51,7 @@ class SIG:
                 fs[0] = fs[0].strip()
                 if fs[0].startswith("(") and fs[0].endswith(")"):
                     args = fs[0][1:-1].split(",")
-                    for a in args:
+                    for a in args:  # Get all arguments
                         arg = a.strip().split(":")
                         if len(arg) > 1:
                             sargs += "%s &" % self.parse_type(arg[0], arg[1])

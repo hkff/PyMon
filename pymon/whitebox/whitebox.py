@@ -26,11 +26,11 @@ import sys
 # Monitor
 ###################
 class Monitor:
-    def __init__(self, formula=None, debug=False, povo=True):
+    def __init__(self, formula=None, debug=False, raise_on_error=False):
         self.formula = formula
         self.mon = Fotlmon(self.formula, Trace())
         self.debug = debug
-        self.povo = povo
+        self.raise_on_error = raise_on_error
         self.sig = None
 
 
@@ -38,12 +38,12 @@ class mon_fx(Monitor):
     """
     Decorator
     """
-    def __init__(self, formula=None, debug=False, povo=True):
+    def __init__(self, formula=None, debug=False, raise_on_error=False):
         """
         If there are decorator arguments, the function
         to be decorated is not passed to the constructor!
         """
-        super().__init__(formula, debug=debug, povo=povo)
+        super().__init__(formula, debug=debug, raise_on_error=raise_on_error)
 
     def print(self, *args):
         if self.debug:
@@ -116,7 +116,11 @@ class mon_fx(Monitor):
             # self.print(self.mon.trace)
             res = self.mon.monitor(once=False)
 
-            if self.povo:
+            if self.raise_on_error:
+                if res.get("result") is Boolean3.Bottom:
+                    if self.raise_on_error:
+                        raise Exception("Formula violated !")
+            else:
                 print(res)
 
             # self.print(self.mon.formula.toCODE())

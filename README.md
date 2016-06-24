@@ -32,7 +32,7 @@ To install the framework run setup.py:
 Usage
 -----
 
-PyMon provides two monitoring modules, wh
+PyMon provides two monitoring modules: whitebox and blackbox.
 
 #### 1. WhiteBox:
 
@@ -72,6 +72,7 @@ A simple example with native types:
 for more examples see the examples folder.
 
 #### 2. BlackBox:
+TODO
 
 Licensing
 ---------
