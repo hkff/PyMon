@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 __author__ = 'walid'
 
-from fodtlmon.fotl.fotlmon import *
+from fodtlmon.fodtl.fodtlmon import *
 import inspect
 import sys
 
@@ -26,24 +26,28 @@ import sys
 # Monitor
 ###################
 class Monitor:
-    def __init__(self, formula=None, debug=False, raise_on_error=False):
+    def __init__(self, formula=None, debug=False, raise_on_error=False, box=None, name=""):
         self.formula = formula
-        self.mon = Fotlmon(self.formula, Trace())
+        self.mon = Fodtlmon(self.formula, Trace())  # TDO make it monitor [] of properties
         self.debug = debug
         self.raise_on_error = raise_on_error
         self.sig = None
+        self.box = box
+        self.name = name
+        if self.box is not None:  # Register the monitor in the box
+            self.box.register_mon(self)
 
 
 class mon_fx(Monitor):
     """
     Decorator
     """
-    def __init__(self, formula=None, debug=False, raise_on_error=False):
+    def __init__(self, formula=None, debug=False, raise_on_error=False, box=None, name=""):
         """
         If there are decorator arguments, the function
         to be decorated is not passed to the constructor!
         """
-        super().__init__(formula, debug=debug, raise_on_error=raise_on_error)
+        super().__init__(formula, debug=debug, raise_on_error=raise_on_error, box=box, name=name)
 
     def print(self, *args):
         if self.debug:
@@ -114,7 +118,10 @@ class mon_fx(Monitor):
 
             # Run monitor
             # self.print(self.mon.trace)
-            res = self.mon.monitor(once=False)
+            res = self.mon.monitor(once=False, struct_res=True)
+
+            # Update KV
+            #self.box.update_KV(self, res)
 
             if self.raise_on_error:
                 if res.get("result") is Boolean3.Bottom:
@@ -160,9 +167,16 @@ class WhiteBox:
 
     """
     def __init__(self):
-        pass
+        self.monitors = []
+        self.KV = KVector()
 
-    def register(self, klass):
+    def register_mon(self, monitor):
+        monitor.mon.KV = self.KV
+        self.monitors.append(monitor)
+        self.KV.add_entry(KVector.Entry(monitor.name, agent=monitor.name))
+
+    def update_KV(self, monitor, result):
+        #self.KV.update(KVector.Entry(monitor.mon.formula.fid, agent=monitor.name, value=result.get("result"), timestamp=monitor.mon.counter))
         pass
 
     def start_monitoring(self):
