@@ -24,9 +24,9 @@ import datetime
 
 class SIG:
     """
-      MAIN  : ( ARG* ) [-> TYPE]
+      MAIN  : ( ARG* ) [[-> TYPE]]
       ARG   : <arg_name> : TYPE
-      TYPE  : TYPE ( '|' ) TYPE | STRING | [TYPE] TODO
+      TYPE  : TYPE | TYPE || STRING || LIST[STRING]
     """
     def __init__(self, formula=None, debug=False, raise_on_error=True):
         """
@@ -68,12 +68,18 @@ class SIG:
         self.ret_mon = None if self.return_formula is None else Fotlmon(self.return_formula, Trace())
 
     def parse_type(self, arg, types):
-        arg = arg.strip()
-        types = types.strip().split("|")
-        res = ""
-        for t in types:
-            res += "|%s('%s')" % (t.strip(), arg)
-        return "(%s)" % res[1:]
+        # Handle LIST and set
+        if "[" in types and "]" in types:
+            arg = arg.strip()
+            types = types.strip().replace("[", "('%s', '" % arg).replace("]", "')").replace(" ", "").strip()
+            return "(%s)" % types
+        else:
+            arg = arg.strip()
+            types = types.strip().split("|")
+            res = ""
+            for t in types:
+                res += "|%s('%s')" % (t.strip(), arg)
+            return "(%s)" % res[1:]
 
     def __call__(self, f):
         """
@@ -125,12 +131,26 @@ class SIG:
                         for t in o.__class__.__mro__:
                             predicates.append(Predicate(t.__name__, [Constant(x)]))
 
+                # Detect LIST_ arg name
+                print(self.args_formula)
+                arg = re.search('LIST\(\'\w*\'', self.args_formula)
+                if arg is not None:
+                    arg = arg.group(0).replace("LIST(", "").replace("'", "")
+                    lst = context.get(arg)
+                    if isinstance(lst, list):
+                        cts = []
+                        for o in lst:
+                            if isinstance(o, object):
+                                #for t in o.__class__.__mro__:
+                                cts.append(Constant(o.__class__.__name__))
+                        predicates.append(Predicate("bE", cts))
+
                 # Push event into monitor
                 self.args_mon.trace.push_event(Event(predicates))
-
+                print(self.args_mon.trace)
                 # Run monitor
                 res = self.args_mon.monitor(once=False, struct_res=True)
-
+                print(self.args_mon.trace)
                 if res.get("result") is Boolean3.Bottom:
                     expected = self.args_formula[3:-2].replace("&", "& ").replace("|", " | ")
                     found = ["%s: %s" % (str(x), str(type(context.get(x)))) for x in context]
@@ -172,3 +192,15 @@ class SIG:
 
             return fx_ret
         return wrapped
+
+
+class LIST(IP):
+    """ Check LIST elements types """
+    def eval(self, valuation=None, trace=None):
+        args2 = super().eval(valuation=valuation, trace=trace)
+        for p in trace.events[-1].predicates:
+            if p.name == "bE":
+                for x in p.args:
+                    if args2[0].name != x.name:
+                        return False
+        return True
