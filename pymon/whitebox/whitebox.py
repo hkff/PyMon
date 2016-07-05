@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 __author__ = 'walid'
-
 from fodtlmon.fodtl.fodtlmon import *
 import inspect
 import sys
@@ -27,15 +26,27 @@ import sys
 ###################
 class Monitor:
     def __init__(self, formula=None, debug=False, raise_on_error=False, box=None, name=""):
-        self.formula = formula
-        self.mon = Fodtlmon(self.formula, Trace())  # TDO make it monitor [] of properties
+        self.formula = formula if isinstance(formula, list) else [formula]
+        self.trace = Trace()
+        self.mons = []
+        if isinstance(self.formula, list):
+            for formula in self.formula:
+                self.mons.append(Fodtlmon(formula, self.trace))
         self.debug = debug
         self.raise_on_error = raise_on_error
         self.sig = None
         self.box = box
         self.name = name
         if self.box is not None:  # Register the monitor in the box
+            for mon in self.mons:
+                mon.actor = name
             self.box.register_mon(self)
+
+    def add_monitor(self, formula):
+        mon = Fodtlmon(formula, self.trace)
+        mon.actor = self.name
+        self.mons.append(mon)
+        self.box.register_mon(mon)
 
 
 class mon_fx(Monitor):
@@ -114,23 +125,23 @@ class mon_fx(Monitor):
                     predicates.append(Predicate(t.__name__, [Constant(fx_ret)]))
 
             # Push event into monitor
-            self.mon.trace.push_event(Event(predicates))
+            self.trace.push_event(Event(predicates))
 
             # Run monitor
-            # self.print(self.mon.trace)
-            res = self.mon.monitor(once=False, struct_res=True)
+            for mon in self.mons:
+                res = mon.monitor(once=False, struct_res=True)
 
-            # Update KV
-            #self.box.update_KV(self, res)
+                if self.box is not None:
+                    # Update KV
+                    self.box.update_KV(self, mon, res)
 
-            if self.raise_on_error:
-                if res.get("result") is Boolean3.Bottom:
-                    if self.raise_on_error:
-                        raise Exception("Formula violated !")
-            else:
-                print(res)
+                if self.raise_on_error:
+                    if res.get("result") is Boolean3.Bottom:
+                        if self.raise_on_error:
+                            raise Exception("Formula violated !")
+                else:
+                    print(res)
 
-            # self.print(self.mon.formula.toCODE())
             return fx_ret
         return wrapped
 
@@ -164,19 +175,31 @@ def trace_calls_and_returns(frame, event, arg):
 
 class WhiteBox:
     """
-
+    Whitebox class
     """
     def __init__(self):
-        self.monitors = []
+        self.monitors = {}
         self.KV = KVector()
+        self.forward = []
+
+    def check_refs_forward(self):
+        pass
 
     def register_mon(self, monitor):
-        monitor.mon.KV = self.KV
-        self.monitors.append(monitor)
-        self.KV.add_entry(KVector.Entry(monitor.name, agent=monitor.name))
+        for mon in monitor.mons:
+            mon.KV = self.KV
+            # Get all remote formulas
+            remotes = mon.formula.walk(filter_type=At)
+            # Compute formulas hash
+            for f in remotes:
+                f.compute_hash(sid=mon.actor)
+                self.KV.add_entry(KVector.Entry(f.fid, agent=mon.actor))
+                #if f.agent in self.monitors.keys():
+                #    self.monitors[f.agent].
+        self.monitors[monitor.name] = monitor
 
-    def update_KV(self, monitor, result):
-        #self.KV.update(KVector.Entry(monitor.mon.formula.fid, agent=monitor.name, value=result.get("result"), timestamp=monitor.mon.counter))
+    def update_KV(self, monitor, mon, result):
+        #self.KV.update(KVector.Entry(mon.formula.fid, agent=monitor.name, value=result.get("result"), timestamp=mon.counter))
         pass
 
     def start_monitoring(self):
