@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../fodtlmon/.idea/fodtlmon.iml" filepath="$PROJECT_DIR$/../fodtlmon/.idea/fodtlmon.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/pymon.iml" filepath="$PROJECT_DIR$/.idea/pymon.iml" />
     </modules>
   </component>

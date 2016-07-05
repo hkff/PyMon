@@ -24,9 +24,9 @@ setup(
     url='https://github.com/hkff/PyMon',
     license='GPL3',
     author='Walid Benghabrit',
-    author_email='Walid.Benghabrit@mines-nantes.fr',
+    author_email='benghabrit.walid@gmail.com',
     description='Temporal Logic monitoring framework for python.',
     install_requires=[
-        'fodtlmon>=1.0',
+        'fodtlmon>=1.2',
     ]
 )
