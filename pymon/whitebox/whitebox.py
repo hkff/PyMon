@@ -116,6 +116,18 @@ class mon_fx(Monitor):
                     for t in o.__class__.__mro__:
                         predicates.append(Predicate(t.__name__, [Constant(x)]))
 
+                # Push special event log
+                if hasattr(o, "__log_event__"):
+                    event = o.__log_event__()
+                    if isinstance(event, list):
+                        for p in event:
+                            if isinstance(p, Predicate):
+                                predicates.append(p)
+                    elif isinstance(event, Predicate):
+                        predicates.append(event)
+                    elif isinstance(event, str):
+                        predicates.append(Predicate.parse(event))
+
             # Method return type / value
             # predicates.append(Predicate(type(fx_ret).__name__, [Constant(fx_ret)]))
             predicates.append(Predicate("RET", [Constant(fx_ret)]))
