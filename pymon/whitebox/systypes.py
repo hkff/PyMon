@@ -28,7 +28,7 @@ class SIG:
       ARG   : <arg_name> : TYPE
       TYPE  : TYPE | TYPE || STRING || LIST[STRING]
     """
-    def __init__(self, formula=None, debug=False, raise_on_error=True):
+    def __init__(self, formula=None, debug=False, raise_on_error=True, on_args_error=None, on_ret_error=None):
         """
         If there are decorator arguments, the function
         to be decorated is not passed to the constructor!
@@ -37,6 +37,8 @@ class SIG:
         self.return_formula = None
         self.raise_on_error = raise_on_error
         self.annotations = None
+        self.on_args_error = on_args_error
+        self.on_ret_error = on_ret_error
 
         if formula is None:
             # TODO Check using python types annotations
@@ -132,7 +134,7 @@ class SIG:
                             predicates.append(Predicate(t.__name__, [Constant(x)]))
 
                 # Detect LIST_ arg name
-                print(self.args_formula)
+                # print(self.args_formula)
                 arg = re.search('LIST\(\'\w*\'', self.args_formula)
                 if arg is not None:
                     arg = arg.group(0).replace("LIST(", "").replace("'", "")
@@ -147,10 +149,10 @@ class SIG:
 
                 # Push event into monitor
                 self.args_mon.trace.push_event(Event(predicates))
-                print(self.args_mon.trace)
+                # print(self.args_mon.trace)
                 # Run monitor
                 res = self.args_mon.monitor(once=False, struct_res=True)
-                print(self.args_mon.trace)
+                # print(self.args_mon.trace)
                 if res.get("result") is Boolean3.Bottom:
                     expected = self.args_formula[3:-2].replace("&", "& ").replace("|", " | ")
                     found = ["%s: %s" % (str(x), str(type(context.get(x)))) for x in context]
@@ -159,6 +161,11 @@ class SIG:
                         raise Exception(res)
                     else:
                         print("On %s : %s" % (datetime.datetime.now(), res))
+                        if self.on_args_error is not None:
+                            # print("calling args fx ...")
+                            edited_args = self.on_args_error(*args, **kwargs)
+                            if len(edited_args) > 0: args = edited_args[0]
+                            if len(edited_args) > 1: kwargs = edited_args[1]
             #########################
             # Performing the fx call
             #########################
@@ -189,6 +196,8 @@ class SIG:
                         raise Exception(res)
                     else:
                         print("On %s : %s" % (datetime.datetime.now(), res))
+                        if self.on_ret_error is not None:
+                            fx_ret = self.on_ret_error(fx_ret)
 
             return fx_ret
         return wrapped
